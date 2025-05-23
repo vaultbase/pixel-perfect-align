@@ -15,17 +15,31 @@ State-of-the-art image alignment system for high-resolution image mosaicing with
 
 ## Quick Start
 
-### GUI Application (Recommended)
+### Simplest - Command Line
+```bash
+# Just run with a folder path!
+python simple_align.py /path/to/images
+```
+
+### GUI Options
+
+#### Tkinter GUI (Most Stable)
+```bash
+python tk_gui.py
+```
+Simple, stable GUI that works well on all platforms.
+
+#### PyQt6 GUI (Feature-rich but may have issues on macOS)
 ```bash
 python align_gui.py
 ```
-- Drag & drop images or browse for folder
-- Click "Start Alignment" - that's it!
 
-### Command Line - Easy Mode
+### Batch Processing
 ```bash
-# Just pass a folder - everything else is automatic!
-python easy_align.py /path/to/images
+# Process multiple folders at once
+./batch_align.sh folder1 folder2 folder3
+
+# Or drag multiple folders onto the script
 ```
 
 ### Command Line - Advanced
