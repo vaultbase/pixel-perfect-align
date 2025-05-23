@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 
 import numpy as np
-from tqdm import tqdm
 
 from ..algorithms.fourier_align import FourierAligner
 from ..algorithms.attention_matcher import AttentionMatcher
@@ -59,9 +58,20 @@ class AlignmentPipeline:
         # Step 1: Build image pyramids for multi-resolution processing
         logger.info("Building image pyramids...")
         pyramids = []
-        for img in tqdm(images, desc="Building pyramids"):
-            pyramid = ImagePyramid(img, levels=5)
-            pyramids.append(pyramid)
+        
+        # Determine appropriate pyramid levels based on image size
+        max_dim = max(images[0].shape[:2])
+        levels = min(5, int(np.log2(max_dim / 128)) + 1)
+        logger.info(f"Using {levels} pyramid levels for images of size {images[0].shape}")
+        
+        for i, img in enumerate(images):
+            logger.debug(f"Building pyramid for image {i+1}/{len(images)}")
+            try:
+                pyramid = ImagePyramid(img, levels=levels)
+                pyramids.append(pyramid)
+            except Exception as e:
+                logger.error(f"Failed to build pyramid for image {i}: {e}")
+                raise
         
         # Step 2: Initial pairwise alignment using Fourier methods
         logger.info("Performing initial Fourier-based alignment...")

@@ -591,16 +591,30 @@ class PixelPerfectAlignGUI(QMainWindow):
     def closeEvent(self, event):
         """Save settings when closing"""
         self.settings.setValue('window_geometry', self.saveGeometry())
+        
+        # Ensure thread is stopped
+        if self.alignment_thread and self.alignment_thread.isRunning():
+            self.alignment_thread.quit()
+            self.alignment_thread.wait()
+        
         event.accept()
 
 
 def main():
     """Main entry point"""
+    # Fix for macOS
+    if sys.platform == 'darwin':
+        os.environ['QT_MAC_WANTS_LAYER'] = '1'
+    
     app = QApplication(sys.argv)
     app.setApplicationName("Pixel Perfect Align")
+    app.setOrganizationName("PixelPerfectAlign")
     
     # Set application style
     app.setStyle('Fusion')
+    
+    # Ensure proper cleanup
+    app.aboutToQuit.connect(app.deleteLater)
     
     window = PixelPerfectAlignGUI()
     window.show()

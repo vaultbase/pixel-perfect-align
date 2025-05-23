@@ -31,18 +31,30 @@ class ImagePyramid:
         current = self.original
         
         for level in range(1, self.levels):
+            # Check if we can continue downsampling
+            if current.shape[0] < 32 or current.shape[1] < 32:
+                break
+                
             # Apply Gaussian blur before downsampling
             sigma = self.scale_factor / 2.0
+            
+            # Use smaller kernel for efficiency
+            kernel_size = int(2 * np.ceil(3 * sigma) + 1)
+            kernel_size = min(kernel_size, 31)  # Cap kernel size
+            
+            if kernel_size % 2 == 0:
+                kernel_size += 1
+                
             blurred = cv2.GaussianBlur(
                 current,
-                (0, 0),
+                (kernel_size, kernel_size),
                 sigmaX=sigma,
                 sigmaY=sigma
             )
             
             # Downsample
-            new_h = int(current.shape[0] / self.scale_factor)
-            new_w = int(current.shape[1] / self.scale_factor)
+            new_h = max(16, int(current.shape[0] / self.scale_factor))
+            new_w = max(16, int(current.shape[1] / self.scale_factor))
             
             downsampled = cv2.resize(
                 blurred,
