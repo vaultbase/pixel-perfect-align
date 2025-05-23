@@ -10,6 +10,7 @@ from pathlib import Path
 from datetime import datetime
 import json
 from typing import List, Optional
+from PyQt6.QtCore import QSettings
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -17,8 +18,8 @@ from PyQt6.QtWidgets import (
     QMessageBox, QListWidget, QListWidgetItem, QSplitter,
     QGroupBox, QCheckBox
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QFont, QIcon, QPixmap, QDragEnterEvent, QDropEvent
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QByteArray
+from PyQt6.QtGui import QFont, QIcon, QPixmap, QDragEnterEvent, QDropEvent, QCloseEvent
 
 from src.core.pipeline import AlignmentPipeline
 from src.utils.io import ImageLoader, ResultExporter
@@ -116,12 +117,25 @@ class PixelPerfectAlignGUI(QMainWindow):
         self.selected_folder = None
         self.selected_images = []
         self.alignment_thread = None
+        
+        # Initialize settings for persistent storage
+        self.settings = QSettings('PixelPerfectAlign', 'AlignmentTool')
+        
+        # Load last directory
+        self.last_directory = self.settings.value('last_directory', str(Path.home()))
+        
         self.init_ui()
     
     def init_ui(self):
         """Initialize the user interface"""
         self.setWindowTitle("Pixel Perfect Align")
-        self.setGeometry(100, 100, 1200, 800)
+        
+        # Restore window geometry
+        geometry = self.settings.value('window_geometry')
+        if geometry:
+            self.restoreGeometry(geometry)
+        else:
+            self.setGeometry(100, 100, 1200, 800)
         
         # Set modern style
         self.setStyleSheet("""
@@ -369,24 +383,31 @@ class PixelPerfectAlignGUI(QMainWindow):
         folder = QFileDialog.getExistingDirectory(
             self,
             "Select Folder with Images",
-            str(Path.home()),
+            self.last_directory,
             QFileDialog.Option.ShowDirsOnly
         )
         
         if folder:
             self.load_folder(Path(folder))
+            # Save the parent directory for next time
+            self.last_directory = str(Path(folder).parent)
+            self.settings.setValue('last_directory', self.last_directory)
     
     def select_files(self):
         """Select individual image files"""
         files, _ = QFileDialog.getOpenFileNames(
             self,
             "Select Images",
-            str(Path.home()),
+            self.last_directory,
             "Image Files (*.tif *.tiff *.jpg *.jpeg *.png *.raw *.dng *.raf *.nef *.cr2 *.arw)"
         )
         
         if files:
             self.load_files([Path(f) for f in files])
+            # Save the directory for next time
+            if files:
+                self.last_directory = str(Path(files[0]).parent)
+                self.settings.setValue('last_directory', self.last_directory)
     
     def load_folder(self, folder: Path):
         """Load all images from a folder"""
@@ -566,6 +587,11 @@ class PixelPerfectAlignGUI(QMainWindow):
         # Auto-scroll to bottom
         scrollbar = self.log_text.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+    
+    def closeEvent(self, event):
+        """Save settings when closing"""
+        self.settings.setValue('window_geometry', self.saveGeometry())
+        event.accept()
 
 
 def main():

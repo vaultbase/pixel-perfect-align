@@ -84,7 +84,7 @@ class Transform:
         result._decompose_matrix()
         return result
     
-    def scale(self, factor: float) -> 'Transform':
+    def scale_by(self, factor: float) -> 'Transform':
         """Scale the transform parameters"""
         result = Transform()
         result.tx = self.tx * factor

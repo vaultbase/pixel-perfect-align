@@ -142,7 +142,7 @@ class AlignmentPipeline:
                 
                 # Scale up for next level
                 if level > 0:
-                    transform = transform.scale(2.0)
+                    transform = transform.scale_by(2.0)
                 
                 # Accumulate transform
                 transforms[i] = transforms[i].compose(transform)
