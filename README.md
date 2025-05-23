@@ -4,6 +4,8 @@ State-of-the-art image alignment system for high-resolution image mosaicing with
 
 ## Features
 
+- **Zero-Effort GUI**: Simple drag-and-drop interface for effortless alignment
+- **Automatic Output**: Creates "Aligned" folder automatically
 - **Coarse-to-Fine Alignment**: Multi-resolution approach using Fourier decomposition
 - **Global Bundle Adjustment**: Simultaneous optimization across all images
 - **Advanced Distortion Correction**: Handles lens distortion and perspective warping
@@ -11,14 +13,29 @@ State-of-the-art image alignment system for high-resolution image mosaicing with
 - **High Performance**: Optimized for MacBook Pro, completes in under 10 minutes
 - **16-bit Linear TIFF Output**: Preserves full dynamic range
 
-## Architecture
+## Quick Start
 
-The system uses a hierarchical approach:
-1. Initial rough alignment using phase correlation
-2. Multi-scale Fourier decomposition for frequency-based alignment
-3. Attention-based patch matching for fine details
-4. Global optimization with distortion parameter estimation
-5. Final homography refinement with sub-pixel accuracy
+### GUI Application (Recommended)
+```bash
+python align_gui.py
+```
+- Drag & drop images or browse for folder
+- Click "Start Alignment" - that's it!
+
+### Command Line - Easy Mode
+```bash
+# Just pass a folder - everything else is automatic!
+python easy_align.py /path/to/images
+```
+
+### Command Line - Advanced
+```bash
+# Automatic output to input-dir/Aligned
+python align.py --input-dir ./images
+
+# Custom output directory
+python align.py --input-dir ./images --output-dir ./custom-output
+```
 
 ## Installation
 
@@ -26,15 +43,10 @@ The system uses a hierarchical approach:
 pip install -r requirements.txt
 ```
 
-## Usage
-
-```bash
-python align.py --input-dir ./images --output-dir ./aligned --export-transforms
-```
-
 ## Output
 
+All outputs are automatically saved to an "Aligned" subfolder:
 - Aligned 16-bit linear TIFF images on full canvas
-- Transform parameters (JSON)
+- Transform parameters (transforms.json)
 - Composite image using overlap averaging
-- Distortion coefficients and homographies
+- Processing summary and metrics

@@ -35,14 +35,16 @@ def parse_arguments():
     parser.add_argument(
         "--output-dir",
         type=Path,
-        required=True,
-        help="Directory for output aligned images"
+        required=False,
+        default=None,
+        help="Directory for output aligned images (default: input-dir/Aligned)"
     )
     
     parser.add_argument(
         "--export-transforms",
         action="store_true",
-        help="Export transformation parameters to JSON"
+        default=True,
+        help="Export transformation parameters to JSON (default: True)"
     )
     
     parser.add_argument(
@@ -92,16 +94,23 @@ def parse_arguments():
 def main():
     args = parse_arguments()
     
+    # Auto-create output directory if not specified
+    if args.output_dir is None:
+        args.output_dir = args.input_dir / "Aligned"
+    
     # Setup logging
     log_level = logging.DEBUG if args.debug else logging.INFO
+    
+    # Create output directory first for logging
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    
     logger = setup_logging(log_level, args.output_dir / "alignment.log")
     
     logger.info("Pixel Perfect Align - Starting alignment pipeline")
     logger.info(f"Input directory: {args.input_dir}")
     logger.info(f"Output directory: {args.output_dir}")
     
-    # Create output directories
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    # Create cache directory
     args.cache_dir.mkdir(parents=True, exist_ok=True)
     
     # Load images
