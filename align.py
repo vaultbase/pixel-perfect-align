@@ -123,6 +123,9 @@ def main():
     image_paths = sorted(args.input_dir.glob("*"))
     image_paths = [p for p in image_paths if p.suffix.lower() in {'.tif', '.tiff', '.jpg', '.jpeg', '.png', '.dng', '.raw'}]
     
+    # Filter out hidden/system files
+    image_paths = [p for p in image_paths if not p.name.startswith('._') and not p.name.startswith('.')]
+    
     if len(image_paths) < 2:
         logger.error("Need at least 2 images for alignment")
         sys.exit(1)
@@ -133,9 +136,20 @@ def main():
     metadata = []
     
     for path in tqdm(image_paths, desc="Loading images"):
-        img, meta = loader.load_image(path)
-        images.append(img)
-        metadata.append(meta)
+        try:
+            img, meta = loader.load_image(path)
+            images.append(img)
+            metadata.append(meta)
+        except Exception as e:
+            logger.warning(f"Skipping {path.name}: {str(e)}")
+            continue
+    
+    # Check if we have enough valid images
+    if len(images) < 2:
+        logger.error(f"Only {len(images)} valid images found. Need at least 2 images for alignment.")
+        sys.exit(1)
+    
+    logger.info(f"Successfully loaded {len(images)} images")
     
     # Initialize alignment pipeline
     logger.info("Initializing alignment pipeline...")

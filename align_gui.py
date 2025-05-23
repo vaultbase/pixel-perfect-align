@@ -47,12 +47,21 @@ class AlignmentThread(QThread):
             
             for i, path in enumerate(self.image_paths):
                 self.progress.emit(f"Loading {path.name} ({i+1}/{len(self.image_paths)})")
-                img, meta = self.loader.load_image(path)
-                images.append(img)
-                metadata.append(meta)
+                try:
+                    img, meta = self.loader.load_image(path)
+                    images.append(img)
+                    metadata.append(meta)
+                except Exception as e:
+                    self.progress.emit(f"⚠️ Skipping {path.name}: {str(e)}")
+                    continue
+            
+            # Check if we have enough images
+            if len(images) < 2:
+                self.error.emit("Not enough valid images for alignment. Need at least 2 images.")
+                return
             
             # Run alignment
-            self.progress.emit("Running alignment pipeline...")
+            self.progress.emit(f"Running alignment pipeline with {len(images)} images...")
             self.progress.emit("Stage 1/5: Initial Fourier alignment...")
             results = self.pipeline.align(images, metadata)
             
@@ -391,8 +400,11 @@ class PixelPerfectAlignGUI(QMainWindow):
             image_files.extend(folder.glob(f"*{ext}"))
             image_files.extend(folder.glob(f"*{ext.upper()}"))
         
+        # Filter out hidden/system files and duplicates
+        image_files = [f for f in set(image_files) if not f.name.startswith('._') and not f.name.startswith('.')]
+        
         # Sort by name
-        image_files = sorted(set(image_files))
+        image_files = sorted(image_files)
         
         if image_files:
             self.load_files(image_files)
@@ -433,7 +445,9 @@ class PixelPerfectAlignGUI(QMainWindow):
         for url in event.mimeData().urls():
             path = Path(url.toLocalFile())
             if path.is_file() and path.suffix.lower() in {'.tif', '.tiff', '.jpg', '.jpeg', '.png', '.raw', '.dng', '.raf', '.nef', '.cr2', '.arw'}:
-                files.append(path)
+                # Skip hidden/system files
+                if not path.name.startswith('._') and not path.name.startswith('.'):
+                    files.append(path)
             elif path.is_dir():
                 self.load_folder(path)
                 return

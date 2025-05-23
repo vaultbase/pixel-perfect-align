@@ -49,14 +49,22 @@ class ImageLoader:
         if not path.exists():
             raise FileNotFoundError(f"Image not found: {path}")
         
+        # Skip hidden/system files
+        if path.name.startswith('._') or path.name.startswith('.'):
+            raise ValueError(f"Skipping hidden/system file: {path.name}")
+        
         suffix = path.suffix.lower()
         
-        if suffix in {'.raw', '.dng', '.raf', '.nef', '.cr2', '.arw'}:
-            image, metadata = self._load_raw(path)
-        elif suffix in {'.tif', '.tiff'}:
-            image, metadata = self._load_tiff(path)
-        else:
-            image, metadata = self._load_standard(path)
+        try:
+            if suffix in {'.raw', '.dng', '.raf', '.nef', '.cr2', '.arw'}:
+                image, metadata = self._load_raw(path)
+            elif suffix in {'.tif', '.tiff'}:
+                image, metadata = self._load_tiff(path)
+            else:
+                image, metadata = self._load_standard(path)
+        except Exception as e:
+            logger.error(f"Failed to load {path.name}: {str(e)}")
+            raise ValueError(f"Failed to load {path.name}: {str(e)}")
         
         # Resize if needed
         if self.max_resolution and max(image.shape[:2]) > self.max_resolution:
